@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h2>欢迎登录</h2>
+            <p>登录您的账户，开始购车之旅</p>
+        </div>
+        
+        <form class="auth-form" id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" required placeholder="请输入用户名">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" required placeholder="请输入密码">
+            </div>
+            
+            <div id="errorMsg" class="error-msg"></div>
+            
+            <button type="submit" class="btn btn-primary btn-lg">登录</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>还没有账户? <a href="register.html">立即注册</a></p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        if (Utils.isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            errorMsg.style.display = 'none';
+            
+            try {
+                showLoading();
+                await Auth.login(username, password);
+                Utils.showToast('登录成功！', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
+            } catch (error) {
+                errorMsg.textContent = error.message || '登录失败，请检查用户名和密码';
+                errorMsg.style.display = 'block';
+            } finally {
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>

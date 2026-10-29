@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单详情 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+            <nav>
+                <ul class="nav-menu" id="headerNav"></ul>
+            </nav>
+            <div class="user-menu" id="userMenu"></div>
+        </div>
+    </header>
+
+    <div class="detail-container">
+        <div style="margin-bottom: 20px;">
+            <a href="orders.html" style="color: #1a73e8; text-decoration: none;">← 返回订单列表</a>
+        </div>
+        
+        <div id="orderDetail">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> 汽车商城 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function init() {
+            if (!Utils.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            renderHeader();
+            renderFooter();
+            
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get('id');
+            
+            if (!orderId) {
+                document.getElementById('orderDetail').innerHTML = '<p>无效的订单</p>';
+                return;
+            }
+            
+            await loadOrderDetail(orderId);
+        }
+
+        async function loadOrderDetail(orderId) {
+            try {
+                const order = await Orders.getById(orderId);
+                renderOrderDetail(order);
+            } catch (e) {
+                document.getElementById('orderDetail').innerHTML = '<p>加载失败</p>';
+            }
+        }
+
+        function renderOrderDetail(order) {
+            document.getElementById('orderDetail').innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: var(--shadow);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                        <div>
+                            <h2 style="font-size: 24px; margin-bottom: 8px;">订单号: ${order.id}</h2>
+                            <p style="color: #666;">下单时间: ${Utils.formatDate(order.created_at)}</p>
+                        </div>
+                        <span class="order-status ${order.status}" style="padding: 8px 20px; font-size: 14px;">${getStatusText(order.status)}</span>
+                    </div>
+                    
+                    <h3 style="margin-bottom: 15px; font-size: 18px;">商品信息</h3>
+                    <div style="margin-bottom: 30px;">
+                        ${order.items.map(item => `
+                            <div style="display: flex; gap: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; margin-bottom: 15px;">
+                                <img src="${item.car.image}" alt="${item.car.brand}" style="width: 150px; height: 100px; object-fit: cover; border-radius: 8px;" onerror="this.src='https://via.placeholder.com/150x100'">
+                                <div style="flex: 1;">
+                                    <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">${item.car.brand} ${item.car.model}</div>
+                                    <div style="color: #ea4335; font-size: 20px; font-weight: bold;">${Utils.formatPrice(item.car.price)} × ${item.quantity}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #666;">支付方式</span>
+                            <span>${order.payment_method === 'alipay' ? '支付宝' : '微信支付'}</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #666;">商品件数</span>
+                            <span>${order.items.length} 件</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 20px; font-weight: bold; padding-top: 15px; border-top: 1px solid #ddd;">
+                            <span>订单总额</span>
+                            <span style="color: #ea4335;">${Utils.formatPrice(order.total)}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px;">
+                        ${renderActions(order)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending_payment': '待支付',
+                'paid': '已支付',
+                'shipped': '配送中',
+                'completed': '已完成',
+                'cancelled': '已取消'
+            };
+            return statusMap[status] || status;
+        }
+
+        function renderActions(order) {
+            let buttons = '';
+            
+            if (order.status === 'pending_payment') {
+                buttons += `<a href="payment.html?order_id=${order.id}" class="btn btn-primary">去支付</a>`;
+            }
+            
+            if (order.status === 'paid') {
+                buttons += `<button class="btn btn-secondary" onclick="confirmReceive('${order.id}')">确认收货</button>`;
+            }
+            
+            buttons += `<a href="orders.html" class="btn btn-outline">返回订单列表</a>`;
+            
+            return buttons;
+        }
+
+        async function confirmReceive(orderId) {
+            if (!confirm('确定已收到货物吗？')) return;
+            
+            try {
+                showLoading();
+                await Utils.request(`${API.orders}/${orderId}`, {
+                    method: 'PUT',
+                    body: { status: 'completed' }
+                });
+                Utils.showToast('确认收货成功', 'success');
+                await loadOrderDetail(orderId);
+            } catch (e) {
+                Utils.showToast(e.message || '操作失败', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

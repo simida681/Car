@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车型详情 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索品牌、车型...">
+                <button onclick="handleSearch()">🔍</button>
+            </div>
+            <nav>
+                <ul class="nav-menu" id="headerNav"></ul>
+            </nav>
+            <div class="user-menu" id="userMenu"></div>
+        </div>
+    </header>
+
+    <div class="detail-container" id="carDetail">
+        <div class="loading"><div class="spinner"></div></div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>关于我们</h3>
+                    <ul>
+                        <li><a href="#">公司介绍</a></li>
+                        <li><a href="#">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>购车服务</h3>
+                    <ul>
+                        <li><a href="#">购车流程</a></li>
+                        <li><a href="#">分期付款</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>售后服务</h3>
+                    <ul>
+                        <li><a href="#">保养维修</a></li>
+                        <li><a href="#">质保政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> 汽车商城 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        let carData = null;
+
+        async function init() {
+            renderHeader();
+            renderFooter();
+            await loadCarDetail();
+        }
+
+        async function loadCarDetail() {
+            const params = new URLSearchParams(window.location.search);
+            const carId = params.get('id');
+            
+            if (!carId) {
+                document.getElementById('carDetail').innerHTML = '<p style="text-align:center;padding:60px;">未找到车型</p>';
+                return;
+            }
+            
+            try {
+                carData = await Cars.getById(carId);
+                renderCarDetail();
+            } catch (e) {
+                document.getElementById('carDetail').innerHTML = '<p style="text-align:center;padding:60px;">加载失败</p>';
+            }
+        }
+
+        function renderCarDetail() {
+            const car = carData;
+            const specs = car.specs || {};
+            
+            document.getElementById('carDetail').innerHTML = `
+                <div class="detail-header">
+                    <div class="detail-image">
+                        <img src="${car.image}" alt="${car.brand} ${car.model}" onerror="this.src='https://via.placeholder.com/800x600?text=No+Image'">
+                    </div>
+                    <div class="detail-info">
+                        <h1 class="detail-title">${car.brand} ${car.model}</h1>
+                        <div class="detail-price">${Utils.formatPrice(car.price)} <span>起</span></div>
+                        
+                        <div class="detail-meta">
+                            <div class="detail-meta-item">📅 ${car.year}款</div>
+                            <div class="detail-meta-item">🚗 ${car.category}</div>
+                            <div class="detail-meta-item">🎨 ${car.color}</div>
+                            <div class="detail-meta-item">📦 库存: ${car.stock}辆</div>
+                        </div>
+                        
+                        <p class="detail-description">${car.description}</p>
+                        
+                        <div class="detail-specs">
+                            <h3>车辆参数</h3>
+                            <div class="specs-grid">
+                                <div class="spec-item">
+                                    <span class="spec-label">动力系统</span>
+                                    <span class="spec-value">${specs.engine || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">最大功率</span>
+                                    <span class="spec-value">${specs.horsepower || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">最大扭矩</span>
+                                    <span class="spec-value">${specs.torque || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">电池容量</span>
+                                    <span class="spec-value">${specs.battery || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">续航里程</span>
+                                    <span class="spec-value">${specs.range || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">百公里加速</span>
+                                    <span class="spec-value">${specs['0_100'] || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">变速箱</span>
+                                    <span class="spec-value">${specs.transmission || '-'}</span>
+                                </div>
+                                <div class="spec-item">
+                                    <span class="spec-label">驱动方式</span>
+                                    <span class="spec-value">${specs.drive || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="detail-features">
+                            <h3>配置亮点</h3>
+                            <div class="features-list">
+                                ${(car.features || []).map(f => `<span class="feature-tag">${f}</span>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="detail-actions">
+                            <button class="btn btn-primary btn-lg" onclick="addToCart('${car.id}')">
+                                🛒 加入购物车
+                            </button>
+                            <button class="btn btn-secondary btn-lg" onclick="buyNow('${car.id}')">
+                                💰 立即购买
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.title = `${car.brand} ${car.model} - 汽车商城`;
+        }
+
+        async function addToCart(carId) {
+            if (!Utils.isLoggedIn()) {
+                Utils.showToast('请先登录', 'warning');
+                setTimeout(() => window.location.href = 'login.html', 1000);
+                return;
+            }
+            
+            try {
+                showLoading();
+                await Cart.add(carId, 1);
+                Utils.showToast('已添加到购物车', 'success');
+                loadCartCount();
+            } catch (e) {
+                Utils.showToast(e.message || '添加失败', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function buyNow(carId) {
+            if (!Utils.isLoggedIn()) {
+                Utils.showToast('请先登录', 'warning');
+                setTimeout(() => window.location.href = 'login.html', 1000);
+                return;
+            }
+            
+            try {
+                showLoading();
+                await Cart.add(carId, 1);
+                window.location.href = 'cart.html';
+            } catch (e) {
+                Utils.showToast(e.message || '操作失败', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function handleSearch() {
+            const search = document.getElementById('searchInput').value.trim();
+            if (search) {
+                window.location.href = `cars.html?search=${encodeURIComponent(search)}`;
+            }
+        }
+
+        document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

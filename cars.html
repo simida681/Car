@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车型列表 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索品牌、车型...">
+                <button onclick="handleSearch()">🔍</button>
+            </div>
+            <nav>
+                <ul class="nav-menu" id="headerNav"></ul>
+            </nav>
+            <div class="user-menu" id="userMenu"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div style="padding: 30px 0;">
+            <h2 style="margin-bottom: 20px; font-size: 28px;">全部车型</h2>
+            
+            <div class="filter-section">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label>品牌:</label>
+                        <select id="filterBrand">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>类型:</label>
+                        <select id="filterCategory">
+                            <option value="">全部</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>价格:</label>
+                        <div class="price-input">
+                            <input type="number" id="minPrice" placeholder="最低">
+                            <span>-</span>
+                            <input type="number" id="maxPrice" placeholder="最高">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="applyFilters()">筛选</button>
+                    <button class="btn btn-outline" onclick="resetFilters()">重置</button>
+                </div>
+            </div>
+
+            <div class="cars-grid" id="carsGrid">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>关于我们</h3>
+                    <ul>
+                        <li><a href="#">公司介绍</a></li>
+                        <li><a href="#">联系我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>购车服务</h3>
+                    <ul>
+                        <li><a href="#">购车流程</a></li>
+                        <li><a href="#">分期付款</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>售后服务</h3>
+                    <ul>
+                        <li><a href="#">保养维修</a></li>
+                        <li><a href="#">质保政策</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> 汽车商城 版权所有</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function init() {
+            renderHeader();
+            renderFooter();
+            await loadFilterOptions();
+            await loadCars();
+        }
+
+        async function loadCars() {
+            const params = getUrlParams();
+            try {
+                const cars = await Cars.getAll(params);
+                const grid = document.getElementById('carsGrid');
+                
+                if (cars.length === 0) {
+                    grid.innerHTML = '<p style="text-align:center;padding:40px;color:#666;">暂无符合条件的车型</p>';
+                    return;
+                }
+                
+                grid.innerHTML = cars.map(car => renderCarCard(car)).join('');
+            } catch (e) {
+                document.getElementById('carsGrid').innerHTML = 
+                    '<p style="text-align:center;padding:40px;color:#666;">加载失败，请稍后重试</p>';
+            }
+        }
+
+        async function loadFilterOptions() {
+            try {
+                const [brands, categories] = await Promise.all([
+                    Cars.getBrands(),
+                    Cars.getCategories()
+                ]);
+                
+                const brandSelect = document.getElementById('filterBrand');
+                const categorySelect = document.getElementById('filterCategory');
+                
+                const params = getUrlParams();
+                
+                brands.forEach(brand => {
+                    const selected = params.brand === brand ? 'selected' : '';
+                    brandSelect.innerHTML += `<option value="${brand}" ${selected}>${brand}</option>`;
+                });
+                
+                categories.forEach(cat => {
+                    const selected = params.category === cat ? 'selected' : '';
+                    categorySelect.innerHTML += `<option value="${cat}" ${selected}>${cat}</option>`;
+                });
+                
+                if (params.min_price) {
+                    document.getElementById('minPrice').value = params.min_price;
+                }
+                if (params.max_price) {
+                    document.getElementById('maxPrice').value = params.max_price;
+                }
+                if (params.search) {
+                    document.getElementById('searchInput').value = params.search;
+                }
+            } catch (e) {
+                console.error('Failed to load filter options');
+            }
+        }
+
+        function applyFilters() {
+            const brand = document.getElementById('filterBrand')?.value;
+            const category = document.getElementById('filterCategory')?.value;
+            const minPrice = document.getElementById('minPrice')?.value;
+            const maxPrice = document.getElementById('maxPrice')?.value;
+            const search = document.getElementById('searchInput')?.value;
+            
+            const params = new URLSearchParams();
+            if (brand) params.append('brand', brand);
+            if (category) params.append('category', category);
+            if (minPrice) params.append('min_price', minPrice);
+            if (maxPrice) params.append('max_price', maxPrice);
+            if (search) params.append('search', search);
+            
+            window.location.href = `cars.html?${params.toString()}`;
+        }
+
+        function resetFilters() {
+            window.location.href = 'cars.html';
+        }
+
+        function handleSearch() {
+            const search = document.getElementById('searchInput').value.trim();
+            if (search) {
+                window.location.href = `cars.html?search=${encodeURIComponent(search)}`;
+            } else {
+                window.location.href = 'cars.html';
+            }
+        }
+
+        document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

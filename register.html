@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h2>创建账户</h2>
+            <p>注册成为会员，享受更多优惠</p>
+        </div>
+        
+        <form class="auth-form" id="registerForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" required placeholder="请输入用户名" minlength="3">
+            </div>
+            
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="email" id="email" name="email" required placeholder="请输入邮箱">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" required placeholder="请输入密码" minlength="6">
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword">确认密码</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required placeholder="请再次输入密码">
+            </div>
+            
+            <div id="errorMsg" class="error-msg"></div>
+            
+            <button type="submit" class="btn btn-primary btn-lg">注册</button>
+        </form>
+        
+        <div class="auth-footer">
+            <p>已有账户? <a href="login.html">立即登录</a></p>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        if (Utils.isLoggedIn()) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            errorMsg.style.display = 'none';
+            
+            if (password !== confirmPassword) {
+                errorMsg.textContent = '两次输入的密码不一致';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorMsg.textContent = '密码长度至少6位';
+                errorMsg.style.display = 'block';
+                return;
+            }
+            
+            try {
+                showLoading();
+                await Auth.register(username, email, password);
+                Utils.showToast('注册成功！', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 500);
+            } catch (error) {
+                errorMsg.textContent = error.message || '注册失败，请重试';
+                errorMsg.style.display = 'block';
+            } finally {
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>

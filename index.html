@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汽车商城 - 购车首选</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索品牌、车型...">
+                <button onclick="handleSearch()">🔍</button>
+            </div>
+            <nav>
+                <ul class="nav-menu" id="headerNav">
+                </ul>
+            </nav>
+            <div class="user-menu" id="userMenu">
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>开启您的梦想之旅</h1>
+            <p>精选全球知名品牌新能源汽车，总有一款适合您</p>
+            <div class="hero-btns">
+                <a href="cars.html" class="btn btn-primary btn-lg">浏览车型</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="container">
+        <section class="filter-section" id="filterSection">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>品牌:</label>
+                    <select id="filterBrand">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>类型:</label>
+                    <select id="filterCategory">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>价格:</label>
+                    <div class="price-input">
+                        <input type="number" id="minPrice" placeholder="最低">
+                        <span>-</span>
+                        <input type="number" id="maxPrice" placeholder="最高">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="applyFilters()">筛选</button>
+                <button class="btn btn-outline" onclick="resetFilters()">重置</button>
+            </div>
+        </section>
+
+        <section class="cars-section">
+            <h2 style="margin: 30px 0 20px; font-size: 28px;">热门车型</h2>
+            <div class="cars-grid" id="carsGrid">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </section>
+    </div>
+
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">5000+</div>
+                    <div class="stat-label">累计销量</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">品牌车型</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">98%</div>
+                    <div class="stat-label">用户满意度</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">24/7</div>
+                    <div class="stat-label">客服服务</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-section">
+                    <h3>关于我们</h3>
+                    <ul>
+                        <li><a href="#">公司介绍</a></li>
+                        <li><a href="#">联系我们</a></li>
+                        <li><a href="#">加入我们</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>购车服务</h3>
+                    <ul>
+                        <li><a href="#">购车流程</a></li>
+                        <li><a href="#">分期付款</a></li>
+                        <li><a href="#">保险服务</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>售后服务</h3>
+                    <ul>
+                        <li><a href="#">保养维修</a></li>
+                        <li><a href="#">质保政策</a></li>
+                        <li><a href="#">道路救援</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>关注我们</h3>
+                    <ul>
+                        <li><a href="#">微信公众号</a></li>
+                        <li><a href="#">官方微博</a></li>
+                        <li><a href="#">抖音官方</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="footerYear"></span> 汽车商城 版权所有 | ICP备案号: 12345678</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/app.js"></script>
+    <script>
+        async function init() {
+            renderHeader();
+            renderFooter();
+            await loadFilterOptions();
+            await loadCars();
+        }
+
+        async function loadCars() {
+            try {
+                const cars = await Cars.getAll();
+                const grid = document.getElementById('carsGrid');
+                
+                if (cars.length === 0) {
+                    grid.innerHTML = '<p style="text-align:center;padding:40px;color:#666;">暂无车型</p>';
+                    return;
+                }
+                
+                grid.innerHTML = cars.slice(0, 8).map(car => renderCarCard(car)).join('');
+            } catch (e) {
+                document.getElementById('carsGrid').innerHTML = 
+                    '<p style="text-align:center;padding:40px;color:#666;">加载失败，请稍后重试</p>';
+            }
+        }
+
+        async function loadFilterOptions() {
+            try {
+                const [brands, categories] = await Promise.all([
+                    Cars.getBrands(),
+                    Cars.getCategories()
+                ]);
+                
+                const brandSelect = document.getElementById('filterBrand');
+                const categorySelect = document.getElementById('filterCategory');
+                
+                brands.forEach(brand => {
+                    brandSelect.innerHTML += `<option value="${brand}">${brand}</option>`;
+                });
+                
+                categories.forEach(cat => {
+                    categorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+                });
+            } catch (e) {
+                console.error('Failed to load filter options');
+            }
+        }
+
+        function applyFilters() {
+            const brand = document.getElementById('filterBrand')?.value;
+            const category = document.getElementById('filterCategory')?.value;
+            const minPrice = document.getElementById('minPrice')?.value;
+            const maxPrice = document.getElementById('maxPrice')?.value;
+            
+            const params = new URLSearchParams();
+            if (brand) params.append('brand', brand);
+            if (category) params.append('category', category);
+            if (minPrice) params.append('min_price', minPrice);
+            if (maxPrice) params.append('max_price', maxPrice);
+            
+            window.location.href = `cars.html?${params.toString()}`;
+        }
+
+        function resetFilters() {
+            window.location.href = 'cars.html';
+        }
+
+        function handleSearch() {
+            const search = document.getElementById('searchInput').value.trim();
+            if (search) {
+                window.location.href = `cars.html?search=${encodeURIComponent(search)}`;
+            }
+        }
+
+        document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+
+        init();
+    </script>
+</body>
+</html>

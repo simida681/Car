@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付页面 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .payment-container {
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        
+        .payment-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .payment-header h2 {
+            font-size: 28px;
+            color: #1a73e8;
+            margin-bottom: 10px;
+        }
+        
+        .order-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+        
+        .order-info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        
+        .order-info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .order-info-label {
+            color: #666;
+        }
+        
+        .order-info-value {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .qr-section {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+            border-radius: 16px;
+            margin: 25px 0;
+        }
+        
+        .qr-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .qr-code-display {
+            width: 220px;
+            height: 220px;
+            margin: 0 auto 20px;
+            background: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .qr-pattern {
+            width: 180px;
+            height: 180px;
+            position: relative;
+        }
+        
+        .qr-pattern::before {
+            content: '📱';
+            font-size: 80px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.3;
+        }
+        
+        .qr-pattern .corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #1a73e8;
+            border-radius: 8px;
+        }
+        
+        .qr-pattern .corner-tl { top: 0; left: 0; }
+        .qr-pattern .corner-tr { top: 0; right: 0; }
+        .qr-pattern .corner-bl { bottom: 0; left: 0; }
+        .qr-pattern .corner-br { bottom: 0; right: 0; }
+        
+        .qr-pattern .fake-qr {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: 
+                repeating-linear-gradient(0deg, #1a73e8 0px, #1a73e8 8px, transparent 8px, transparent 16px),
+                repeating-linear-gradient(90deg, #1a73e8 0px, #1a73e8 8px, transparent 8px, transparent 16px);
+            opacity: 0.15;
+        }
+        
+        .payment-amount-display {
+            font-size: 42px;
+            font-weight: bold;
+            color: #ea4335;
+            margin: 20px 0;
+        }
+        
+        .payment-amount-display::before {
+            content: '¥';
+            font-size: 24px;
+            margin-right: 5px;
+        }
+        
+        .payment-tips {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        
+        .payment-tips p {
+            margin-bottom: 8px;
+        }
+        
+        .countdown {
+            font-size: 16px;
+            color: #f57c00;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        
+        .btn-pay {
+            width: 100%;
+            padding: 18px;
+            font-size: 18px;
+            margin-top: 25px;
+        }
+        
+        .payment-success {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #34a853, #2e7d32);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 50px;
+            color: white;
+            animation: successPop 0.5s ease;
+        }
+        
+        @keyframes successPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .success-title {
+            font-size: 26px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .success-message {
+            color: #666;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <div class="container">
+                <span>品质保证 · 优质服务 · 值得信赖</span>
+            </div>
+        </div>
+        <div class="header-main container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">🚗</div>
+                <span>汽车商城</span>
+            </a>
+        </div>
+    </header>
+
+    <div class="payment-container" id="paymentContainer">
+        <div class="loading"><div class="spinner"></div></div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        let orderData = null;
+        let checkInterval = null;
+
+        async function init() {
+            if (!Utils.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get('order_id');
+            const amount = params.get('amount');
+            
+            if (!orderId) {
+                showError('无效的订单');
+                return;
+            }
+            
+            await loadPaymentInfo(orderId, amount);
+        }
+
+        async function loadPaymentInfo(orderId, amount) {
+            try {
+                showLoading();
+                orderData = await Orders.getById(orderId);
+                
+                if (!orderData) {
+                    showError('订单不存在');
+                    return;
+                }
+                
+                if (orderData.status === 'paid') {
+                    showPaymentSuccess(orderId);
+                    return;
+                }
+                
+                renderPaymentPage(orderData);
+            } catch (e) {
+                showError('加载失败: ' + e.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderPaymentPage(order) {
+            const paymentMethod = order.payment_method === 'alipay' ? '支付宝' : '微信支付';
+            const qrText = paymentMethod === '支付宝' ? '💳' : '💰';
+            
+            document.getElementById('paymentContainer').innerHTML = `
+                <div class="payment-header">
+                    <h2>${paymentMethod} 扫码支付</h2>
+                    <p style="color: #666;">请使用${paymentMethod}扫描下方二维码完成支付</p>
+                </div>
+                
+                <div class="order-info">
+                    <div class="order-info-row">
+                        <span class="order-info-label">订单编号</span>
+                        <span class="order-info-value">${order.id}</span>
+                    </div>
+                    <div class="order-info-row">
+                        <span class="order-info-label">商品数量</span>
+                        <span class="order-info-value">${order.items.length} 件</span>
+                    </div>
+                    <div class="order-info-row">
+                        <span class="order-info-label">支付方式</span>
+                        <span class="order-info-value">${paymentMethod}</span>
+                    </div>
+                </div>
+                
+                <div class="qr-section">
+                    <div class="qr-title">${paymentMethod}扫码付款</div>
+                    <div class="qr-code-display">
+                        <img src="images/无标题.png" alt="付款码" style="width: 200px; height: 200px; object-fit: contain;">
+                    </div>
+                    <div class="payment-amount-display">${order.total.toLocaleString()}</div>
+                </div>
+                
+                <div class="payment-tips">
+                    <p>⏱️ 请在15分钟内完成支付</p>
+                    <p>💡 支付完成后，系统将自动更新订单状态</p>
+                    <p>📱 打开${paymentMethod}扫一扫功能扫描上方二维码</p>
+                </div>
+                
+                <div class="countdown" id="countdown"></div>
+                
+                <button class="btn btn-primary btn-lg btn-pay" onclick="simulatePayment('${order.id}')">
+                    💳 我已支付
+                </button>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="orders.html" style="color: #666; text-decoration: none;">查看订单</a>
+                </div>
+            `;
+            
+            startCountdown();
+            startPaymentCheck(order.id);
+        }
+
+        function startCountdown() {
+            let timeLeft = 15 * 60;
+            const countdownEl = document.getElementById('countdown');
+            
+            const update = () => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                countdownEl.textContent = `剩余支付时间: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(checkInterval);
+                    countdownEl.textContent = '订单已超时，请重新下单';
+                    countdownEl.style.color = '#ea4335';
+                }
+                timeLeft--;
+            };
+            
+            update();
+            setInterval(update, 1000);
+        }
+
+        async function startPaymentCheck(orderId) {
+            checkInterval = setInterval(async () => {
+                try {
+                    const status = await Orders.getPaymentStatus(orderId);
+                    if (status.status === 'paid') {
+                        clearInterval(checkInterval);
+                        showPaymentSuccess(orderId);
+                    }
+                } catch (e) {
+                    console.error('Payment check error:', e);
+                }
+            }, 3000);
+        }
+
+        async function simulatePayment(orderId) {
+            try {
+                showLoading();
+                const result = await Orders.simulatePayment(orderId);
+                clearInterval(checkInterval);
+                showPaymentSuccess(orderId);
+            } catch (e) {
+                Utils.showToast(e.message || '支付失败', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function showPaymentSuccess(orderId) {
+            clearInterval(checkInterval);
+            
+            document.getElementById('paymentContainer').innerHTML = `
+                <div class="payment-success">
+                    <div class="success-icon">✓</div>
+                    <div class="success-title">支付成功!</div>
+                    <div class="success-message">
+                        <p>您的订单已支付完成</p>
+                        <p style="color: #999; margin-top: 10px;">订单号: ${orderId}</p>
+                    </div>
+                    <div style="display: flex; gap: 15px; justify-content: center;">
+                        <a href="orders.html" class="btn btn-primary">查看订单</a>
+                        <a href="index.html" class="btn btn-outline">返回首页</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showError(message) {
+            document.getElementById('paymentContainer').innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 50px; margin-bottom: 20px;">❌</div>
+                    <h3 style="margin-bottom: 15px;">${message}</h3>
+                    <a href="orders.html" class="btn btn-primary">查看订单</a>
+                </div>
+            `;
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理后台 - 汽车商城</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="admin-sidebar">
+            <div class="admin-sidebar-header">
+                🚗 汽车商城管理
+            </div>
+            <ul class="admin-menu">
+                <li class="admin-menu-item active" data-page="dashboard">
+                    <a href="#dashboard">📊 数据概览</a>
+                </li>
+                <li class="admin-menu-item" data-page="cars">
+                    <a href="#cars">🚗 车型管理</a>
+                </li>
+                <li class="admin-menu-item" data-page="orders">
+                    <a href="#orders">📋 订单管理</a>
+                </li>
+                <li class="admin-menu-item" data-page="users">
+                    <a href="#users">👥 用户管理</a>
+                </li>
+                <li class="admin-menu-item">
+                    <a href="index.html">🏠 返回首页</a>
+                </li>
+            </ul>
+        </aside>
+
+        <main class="admin-content">
+            <div class="admin-header">
+                <h1>数据概览</h1>
+                <div>
+                    <span id="adminUsername" style="margin-right: 15px;"></span>
+                    <button class="btn btn-outline btn-sm" onclick="Auth.logout()">退出</button>
+                </div>
+            </div>
+
+            <div id="dashboardPage" class="admin-page">
+                <div class="stats-cards" id="statsCards">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">品牌销量排行</div>
+                        <div class="bar-chart" id="brandChart"></div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">月度销售额趋势</div>
+                        <div class="bar-chart" id="salesChart"></div>
+                    </div>
+                </div>
+
+                <div class="chart-container" style="margin-top: 25px;">
+                    <div class="chart-title">热销车型 TOP 5</div>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>排名</th>
+                                <th>车型</th>
+                                <th>品牌</th>
+                                <th>售价</th>
+                                <th>销量</th>
+                                <th>销售额</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topCarsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="carsPage" class="admin-page" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>车型列表</h3>
+                    <button class="btn btn-primary" onclick="showAddCarModal()">+ 添加车型</button>
+                </div>
+                <div class="admin-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>图片</th>
+                                <th>品牌型号</th>
+                                <th>类型</th>
+                                <th>价格</th>
+                                <th>库存</th>
+                                <th>销量</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="carsTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="ordersPage" class="admin-page" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>订单列表</h3>
+                    <div>
+                        <select id="orderStatusFilter" onchange="loadAdminOrders()" style="padding: 8px 15px; border: 1px solid #dadce0; border-radius: 8px;">
+                            <option value="">全部状态</option>
+                            <option value="pending_payment">待支付</option>
+                            <option value="paid">已支付</option>
+                            <option value="shipped">配送中</option>
+                            <option value="completed">已完成</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="admin-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>订单号</th>
+                                <th>用户ID</th>
+                                <th>商品</th>
+                                <th>金额</th>
+                                <th>状态</th>
+                                <th>时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="usersPage" class="admin-page" style="display: none;">
+                <div class="chart-container" style="margin-bottom: 25px;">
+                    <div class="chart-title">用户统计</div>
+                    <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalUsers">0</div>
+                            <div class="stat-label">总用户数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalOrders2">0</div>
+                            <div class="stat-label">总订单数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="paidOrders2">0</div>
+                            <div class="stat-label">已完成订单</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 15px;">用户列表</h3>
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>用户ID</th>
+                                <th>用户名</th>
+                                <th>邮箱</th>
+                                <th>角色</th>
+                                <th>注册时间</th>
+                                <th>已完成订单</th>
+                                <th>累计消费</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="carModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="carModalTitle">添加车型</h3>
+                <button class="modal-close" onclick="closeCarModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="carForm">
+                    <input type="hidden" id="carId">
+                    <div class="form-group">
+                        <label>品牌</label>
+                        <input type="text" id="carBrand" required>
+                    </div>
+                    <div class="form-group">
+                        <label>型号</label>
+                        <input type="text" id="carModel" required>
+                    </div>
+                    <div class="form-group">
+                        <label>年份</label>
+                        <input type="number" id="carYear" required>
+                    </div>
+                    <div class="form-group">
+                        <label>价格</label>
+                        <input type="number" id="carPrice" required>
+                    </div>
+                    <div class="form-group">
+                        <label>类型</label>
+                        <select id="carCategory" required>
+                            <option value="电动车">电动车</option>
+                            <option value="混动">混动</option>
+                            <option value="燃油">燃油车</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>颜色</label>
+                        <input type="text" id="carColor" required>
+                    </div>
+                    <div class="form-group">
+                        <label>图片URL</label>
+                        <input type="url" id="carImage" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea id="carDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>库存</label>
+                        <input type="number" id="carStock" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeCarModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveCar()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        if (!Utils.isAdmin()) {
+            window.location.href = 'index.html';
+        }
+
+        const user = Utils.getUser();
+        document.getElementById('adminUsername').textContent = '管理员: ' + user.username;
+
+        document.querySelectorAll('.admin-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.admin-menu-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                const page = item.dataset.page;
+                document.querySelectorAll('.admin-page').forEach(p => p.style.display = 'none');
+                
+                if (page === 'dashboard') {
+                    document.getElementById('dashboardPage').style.display = 'block';
+                    loadDashboard();
+                } else if (page === 'cars') {
+                    document.getElementById('carsPage').style.display = 'block';
+                    loadAdminCars();
+                } else if (page === 'orders') {
+                    document.getElementById('ordersPage').style.display = 'block';
+                    loadAdminOrders();
+                } else if (page === 'users') {
+                    document.getElementById('usersPage').style.display = 'block';
+                    loadUserStats();
+                }
+            });
+        });
+
+        async function loadDashboard() {
+            try {
+                const stats = await Admin.getStats();
+                
+                document.getElementById('statsCards').innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-card-icon blue">💰</div>
+                        </div>
+                        <div class="stat-card-value">¥${stats.total_sales.toLocaleString()}</div>
+                        <div class="stat-card-label">总销售额</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-card-icon green">📋</div>
+                        </div>
+                        <div class="stat-card-value">${stats.total_orders}</div>
+                        <div class="stat-card-label">总订单数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-card-icon orange">✓</div>
+                        </div>
+                        <div class="stat-card-value">${stats.paid_orders}</div>
+                        <div class="stat-card-label">已完成订单</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-card-icon purple">👥</div>
+                        </div>
+                        <div class="stat-card-value">${stats.total_users}</div>
+                        <div class="stat-card-label">注册用户</div>
+                    </div>
+                `;
+                
+                renderBrandChart(stats.sales_by_brand);
+                renderSalesChart(stats.monthly_sales);
+                renderTopCars(stats.top_cars);
+            } catch (e) {
+                console.error('Failed to load dashboard:', e);
+            }
+        }
+
+        function renderBrandChart(data) {
+            const max = Math.max(...Object.values(data), 1);
+            const html = Object.entries(data).map(([brand, count]) => `
+                <div class="bar-item">
+                    <span class="bar-label">${brand}</span>
+                    <div class="bar-wrapper">
+                        <div class="bar-fill" style="width: ${(count / max) * 100}%">${count}</div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('brandChart').innerHTML = html || '<p>暂无数据</p>';
+        }
+
+        function renderSalesChart(data) {
+            const max = Math.max(...Object.values(data), 1);
+            const html = Object.entries(data).map(([month, amount]) => `
+                <div class="bar-item">
+                    <span class="bar-label">${month}</span>
+                    <div class="bar-wrapper">
+                        <div class="bar-fill" style="width: ${(amount / max) * 100}%">¥${(amount / 10000).toFixed(1)}万</div>
+                    </div>
+                </div>
+            `).join('');
+            document.getElementById('salesChart').innerHTML = html || '<p>暂无数据</p>';
+        }
+
+        function renderTopCars(cars) {
+            document.getElementById('topCarsTable').innerHTML = cars.map((car, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><img src="${car.image}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/80x50'"></td>
+                    <td>${car.brand} ${car.model}</td>
+                    <td>${car.brand}</td>
+                    <td>¥${car.price.toLocaleString()}</td>
+                    <td>${car.sales}</td>
+                    <td>¥${(car.price * car.sales).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadAdminCars() {
+            try {
+                const cars = await Admin.getCars();
+                document.getElementById('carsTable').innerHTML = cars.map(car => `
+                    <tr>
+                        <td>${car.id}</td>
+                        <td><img src="${car.image}" style="width: 80px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://via.placeholder.com/80x50'"></td>
+                        <td>
+                            <div><strong>${car.brand} ${car.model}</strong></div>
+                            <div style="font-size: 12px; color: #666;">${car.year}款 | ${car.color}</div>
+                        </td>
+                        <td>${car.category}</td>
+                        <td>¥${car.price.toLocaleString()}</td>
+                        <td>${car.stock}</td>
+                        <td>${car.sales}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="editCar('${car.id}')">编辑</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteCar('${car.id}')">删除</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to load cars:', e);
+            }
+        }
+
+        async function loadAdminOrders() {
+            try {
+                const status = document.getElementById('orderStatusFilter').value;
+                const orders = await Admin.getOrders(status);
+                document.getElementById('ordersTable').innerHTML = orders.map(order => `
+                    <tr>
+                        <td>${order.id}</td>
+                        <td>${order.username || order.user_id}</td>
+                        <td>${order.items.map(i => i.car.brand + ' ' + i.car.model).join(', ')}</td>
+                        <td>¥${order.total.toLocaleString()}</td>
+                        <td><span class="status-badge ${getStatusClass(order.status)}">${getStatusText(order.status)}</span></td>
+                        <td>${new Date(order.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline" onclick="updateOrderStatus('${order.id}')">更新状态</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to load orders:', e);
+            }
+        }
+
+        function getStatusClass(status) {
+            const map = {
+                'pending_payment': 'warning',
+                'paid': 'success',
+                'shipped': 'info',
+                'completed': 'success'
+            };
+            return map[status] || '';
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'pending_payment': '待支付',
+                'paid': '已支付',
+                'shipped': '配送中',
+                'completed': '已完成'
+            };
+            return map[status] || status;
+        }
+
+        function showAddCarModal() {
+            document.getElementById('carModalTitle').textContent = '添加车型';
+            document.getElementById('carId').value = '';
+            document.getElementById('carForm').reset();
+            document.getElementById('carModal').classList.add('show');
+        }
+
+        function closeCarModal() {
+            document.getElementById('carModal').classList.remove('show');
+        }
+
+        async function editCar(carId) {
+            const cars = await Admin.getCars();
+            const car = cars.find(c => c.id === carId);
+            if (!car) return;
+            
+            document.getElementById('carModalTitle').textContent = '编辑车型';
+            document.getElementById('carId').value = car.id;
+            document.getElementById('carBrand').value = car.brand;
+            document.getElementById('carModel').value = car.model;
+            document.getElementById('carYear').value = car.year;
+            document.getElementById('carPrice').value = car.price;
+            document.getElementById('carCategory').value = car.category;
+            document.getElementById('carColor').value = car.color;
+            document.getElementById('carImage').value = car.image;
+            document.getElementById('carDescription').value = car.description;
+            document.getElementById('carStock').value = car.stock;
+            
+            document.getElementById('carModal').classList.add('show');
+        }
+
+        async function saveCar() {
+            const carId = document.getElementById('carId').value;
+            const carData = {
+                brand: document.getElementById('carBrand').value,
+                model: document.getElementById('carModel').value,
+                year: parseInt(document.getElementById('carYear').value),
+                price: parseInt(document.getElementById('carPrice').value),
+                category: document.getElementById('carCategory').value,
+                color: document.getElementById('carColor').value,
+                image: document.getElementById('carImage').value,
+                description: document.getElementById('carDescription').value,
+                stock: parseInt(document.getElementById('carStock').value)
+            };
+            
+            try {
+                if (carId) {
+                    await Admin.updateCar(carId, carData);
+                    Utils.showToast('更新成功', 'success');
+                } else {
+                    await Admin.addCar(carData);
+                    Utils.showToast('添加成功', 'success');
+                }
+                closeCarModal();
+                loadAdminCars();
+            } catch (e) {
+                Utils.showToast(e.message || '操作失败', 'error');
+            }
+        }
+
+        async function deleteCar(carId) {
+            if (!confirm('确定要删除这个车型吗？')) return;
+            
+            try {
+                await Admin.deleteCar(carId);
+                Utils.showToast('删除成功', 'success');
+                loadAdminCars();
+            } catch (e) {
+                Utils.showToast(e.message || '删除失败', 'error');
+            }
+        }
+
+        async function updateOrderStatus(orderId) {
+            const status = prompt('请输入新状态 (pending_payment/paid/shipped/completed):');
+            if (!status) return;
+            
+            try {
+                await Admin.updateOrder(orderId, { status });
+                Utils.showToast('更新成功', 'success');
+                loadAdminOrders();
+            } catch (e) {
+                Utils.showToast(e.message || '更新失败', 'error');
+            }
+        }
+
+        async function loadUserStats() {
+            try {
+                const stats = await Admin.getStats();
+                document.getElementById('totalUsers').textContent = stats.total_users;
+                document.getElementById('totalOrders2').textContent = stats.total_orders;
+                document.getElementById('paidOrders2').textContent = stats.paid_orders;
+
+                const users = await Admin.getUsers();
+                document.getElementById('usersTable').innerHTML = users.map(user => `
+                    <tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email}</td>
+                        <td><span class="status-badge ${user.role === 'admin' ? 'danger' : 'success'}">${user.role === 'admin' ? '管理员' : '用户'}</span></td>
+                        <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                        <td>${user.paid_orders}</td>
+                        <td>¥${user.total_spent.toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                console.error('Failed to load user stats:', e);
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+</html>
